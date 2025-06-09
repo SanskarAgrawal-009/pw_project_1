@@ -55,6 +55,8 @@ const Register = () => {
       const success = await register(formData.name, formData.email, formData.password, formData.role);
       if (success) {
         navigate('/dashboard');
+      } else {
+        setErrors({ general: 'Email already exists. Please use a different email.' });
       }
     } catch (err) {
       setErrors({ general: 'An error occurred. Please try again.' });
