@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '../services/api';
 
 interface User {
   id: string;
@@ -29,43 +28,71 @@ export const useAuth = () => {
   return context;
 };
 
+// Mock users database
+const mockUsers = [
+  {
+    id: '1',
+    name: 'Admin User',
+    email: 'admin@elearning.com',
+    password: 'admin123',
+    role: 'admin' as const,
+    avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?w=150&h=150&fit=crop&crop=face'
+  },
+  {
+    id: '2',
+    name: 'John Doe',
+    email: 'student@elearning.com',
+    password: 'student123',
+    role: 'student' as const,
+    avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?w=150&h=150&fit=crop&crop=face',
+    enrolledCourses: ['1', '2'],
+    completedCourses: ['3']
+  }
+];
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored token and get current user
-    const token = localStorage.getItem('token');
-    if (token) {
-      getCurrentUser();
-    } else {
-      setLoading(false);
+    // Check for stored user data
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        localStorage.removeItem('user');
+      }
     }
+    setLoading(false);
   }, []);
-
-  const getCurrentUser = async () => {
-    try {
-      const response = await authAPI.getCurrentUser();
-      setUser(response.data);
-    } catch (error) {
-      console.error('Get current user error:', error);
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await authAPI.login(email, password);
-      const { token, user: userData } = response.data;
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
+      // Find user in mock database
+      const foundUser = mockUsers.find(u => u.email === email && u.password === password);
       
-      return true;
+      if (foundUser) {
+        const userData: User = {
+          id: foundUser.id,
+          name: foundUser.name,
+          email: foundUser.email,
+          role: foundUser.role,
+          avatar: foundUser.avatar,
+          enrolledCourses: foundUser.enrolledCourses || [],
+          completedCourses: foundUser.completedCourses || []
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        return true;
+      }
+      
+      return false;
     } catch (error) {
       console.error('Login error:', error);
       return false;
@@ -74,13 +101,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (name: string, email: string, password: string, role: 'admin' | 'student'): Promise<boolean> => {
     try {
-      const response = await authAPI.register(name, email, password, role);
-      const { token, user: userData } = response.data;
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
+      // Check if user already exists
+      const existingUser = mockUsers.find(u => u.email === email);
+      if (existingUser) {
+        return false;
+      }
       
+      // Create new user
+      const newUser: User = {
+        id: (mockUsers.length + 1).toString(),
+        name,
+        email,
+        role,
+        avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?w=150&h=150&fit=crop&crop=face',
+        enrolledCourses: [],
+        completedCourses: []
+      };
+      
+      // Add to mock database (in real app, this would be saved to backend)
+      mockUsers.push({
+        ...newUser,
+        password
+      });
+      
+      localStorage.setItem('user', JSON.stringify(newUser));
+      setUser(newUser);
       return true;
     } catch (error) {
       console.error('Registration error:', error);
@@ -89,7 +137,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
   };

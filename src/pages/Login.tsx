@@ -22,7 +22,27 @@ const Login = () => {
       if (success) {
         navigate('/dashboard');
       } else {
-        setError('Invalid credentials. Please try again.');
+        setError('Invalid email or password. Please try again.');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setError('');
+    setLoading(true);
+
+    try {
+      const success = await login(demoEmail, demoPassword);
+      if (success) {
+        navigate('/dashboard');
+      } else {
+        setError('Demo login failed. Please try again.');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
@@ -42,10 +62,22 @@ const Login = () => {
 
           {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h3 className="text-sm font-medium text-blue-900 mb-2">Demo Credentials:</h3>
-            <div className="text-xs space-y-1 text-blue-700">
-              <p><strong>Admin:</strong> admin@elearning.com / admin123</p>
-              <p><strong>Student:</strong> student@elearning.com / student123</p>
+            <h3 className="text-sm font-medium text-blue-900 mb-3">Try Demo Accounts:</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => handleDemoLogin('admin@elearning.com', 'admin123')}
+                disabled={loading}
+                className="w-full text-left p-2 bg-blue-100 hover:bg-blue-200 rounded text-xs text-blue-700 transition-colors duration-200 disabled:opacity-50"
+              >
+                <strong>Admin:</strong> admin@elearning.com / admin123
+              </button>
+              <button
+                onClick={() => handleDemoLogin('student@elearning.com', 'student123')}
+                disabled={loading}
+                className="w-full text-left p-2 bg-green-100 hover:bg-green-200 rounded text-xs text-green-700 transition-colors duration-200 disabled:opacity-50"
+              >
+                <strong>Student:</strong> student@elearning.com / student123
+              </button>
             </div>
           </div>
 
